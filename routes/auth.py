@@ -50,7 +50,7 @@ async def authorize(request: Request, platform: str = "web", provider: str = "sp
         if platform == "mobile":
             client_id = os.getenv("GOOGLE_MOBILE_CLIENT_ID")
             client_secret = os.getenv("GOOGLE_MOBILE_CLIENT_SECRET")
-            redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "com.googleusercontent.apps.169861546046-2o5jqd2mjnq5453i7t162v06489afhpv:/oauth2redirect")
+            redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "com.googleusercontent.apps.169861546046-5ha8icrjbnkderijuq7djccmmg3fiki9:/oauth2redirect")
         else:
             client_id = os.getenv("GOOGLE_CLIENT_ID")
             client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -100,7 +100,7 @@ async def callback(request: Request, code: str, state: str):
             if platform == "mobile":
                 client_id = os.getenv("GOOGLE_MOBILE_CLIENT_ID")
                 client_secret = os.getenv("GOOGLE_MOBILE_CLIENT_SECRET")
-                redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "com.googleusercontent.apps.169861546046-2o5jqd2mjnq5453i7t162v06489afhpv:/oauth2redirect")
+                redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "com.googleusercontent.apps.169861546046-5ha8icrjbnkderijuq7djccmmg3fiki9:/oauth2redirect")
             else:
                 client_id = os.getenv("GOOGLE_CLIENT_ID")
                 client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
