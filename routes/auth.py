@@ -37,7 +37,7 @@ async def authorize(request: Request, platform: str = "web", provider: str = "sp
         if platform == "mobile":
             client_id = os.getenv("SPOTIFY_MOBILE_CLIENT_ID")
             client_secret = os.getenv("SPOTIFY_MOBILE_CLIENT_SECRET")
-            redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "emotionwellbeing://auth-success")
+            redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "myapplication://auth-success")
         else:
             client_id = os.getenv("SPOTIFY_CLIENT_ID")
             client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
@@ -50,7 +50,7 @@ async def authorize(request: Request, platform: str = "web", provider: str = "sp
         if platform == "mobile":
             client_id = os.getenv("GOOGLE_MOBILE_CLIENT_ID")
             client_secret = os.getenv("GOOGLE_MOBILE_CLIENT_SECRET")
-            redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "com.googleusercontent.apps.169861546046-5ha8icrjbnkderijuq7djccmmg3fiki9:/oauth2redirect")
+            redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "myapplication://auth-success")
         else:
             client_id = os.getenv("GOOGLE_CLIENT_ID")
             client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -88,7 +88,7 @@ async def callback(request: Request, code: str, state: str):
             if platform == "mobile":
                 client_id = os.getenv("SPOTIFY_MOBILE_CLIENT_ID")
                 client_secret = os.getenv("SPOTIFY_MOBILE_CLIENT_SECRET")
-                redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "emotionwellbeing://auth-success")
+                redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "myapplication://auth-success")
             else:
                 client_id = os.getenv("SPOTIFY_CLIENT_ID")
                 client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
@@ -100,7 +100,7 @@ async def callback(request: Request, code: str, state: str):
             if platform == "mobile":
                 client_id = os.getenv("GOOGLE_MOBILE_CLIENT_ID")
                 client_secret = os.getenv("GOOGLE_MOBILE_CLIENT_SECRET")
-                redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "com.googleusercontent.apps.169861546046-5ha8icrjbnkderijuq7djccmmg3fiki9:/oauth2redirect")
+                redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "myapplication://auth-success")
             else:
                 client_id = os.getenv("GOOGLE_CLIENT_ID")
                 client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -126,7 +126,7 @@ async def callback(request: Request, code: str, state: str):
 
         # Redirect back to app or send token in web response
         if platform == "mobile":
-            return RedirectResponse(f"emotionwellbeing://auth-success?token={jwt_token}")
+            return RedirectResponse(f"myapplication://auth-success?token={jwt_token}")
         else:
             return JSONResponse({"token": jwt_token})
 
