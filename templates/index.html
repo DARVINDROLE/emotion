@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health & Music Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold text-center mb-6">Health & Music Dashboard</h1>
+        <p class="text-gray-600 mb-8 text-center">Connect your Google Fit and Spotify accounts to track your health and music together.</p>
+        
+        <div class="space-y-4">
+            <a href="/auth/authorize?provider=google" class="block w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md text-center transition duration-200">
+                Connect Google Fit
+            </a>
+            
+            <a href="/auth/authorize?provider=spotify" class="block w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md text-center transition duration-200">
+                Connect Spotify
+            </a>
+        </div>
+    </div>
+</body>
+</html>
