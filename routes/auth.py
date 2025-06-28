@@ -1,5 +1,3 @@
-# auth.py (Production-ready OAuth state with JWT)
-
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -17,26 +15,29 @@ load_dotenv()
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
+
 @router.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+
 @router.get("/authorize")
 async def authorize(request: Request, platform: str = "web", provider: str = "spotify"):
-    # Encode state with provider & platform
+    # Generate secure OAuth state
     state_payload = {
         "state": str(uuid.uuid4()),
         "provider": provider,
         "platform": platform,
-        "exp": int(time.time()) + 300  # Expires in 5 minutes
+        "exp": int(time.time()) + 300  # 5 min expiry
     }
     state = create_jwt(state_payload)
 
+    # Choose provider
     if provider == "spotify":
         if platform == "mobile":
             client_id = os.getenv("SPOTIFY_MOBILE_CLIENT_ID")
             client_secret = os.getenv("SPOTIFY_MOBILE_CLIENT_SECRET")
-            redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "app://auth-success")
+            redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "emotionwellbeing://auth-success")
         else:
             client_id = os.getenv("SPOTIFY_CLIENT_ID")
             client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
@@ -49,7 +50,7 @@ async def authorize(request: Request, platform: str = "web", provider: str = "sp
         if platform == "mobile":
             client_id = os.getenv("GOOGLE_MOBILE_CLIENT_ID")
             client_secret = os.getenv("GOOGLE_MOBILE_CLIENT_SECRET")
-            redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "app://auth-success")
+            redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "emotionwellbeing://auth-success")
         else:
             client_id = os.getenv("GOOGLE_CLIENT_ID")
             client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -61,13 +62,20 @@ async def authorize(request: Request, platform: str = "web", provider: str = "sp
     else:
         raise HTTPException(status_code=400, detail="Invalid provider")
 
+    # Generate authorization URL
     auth_url = service.get_authorize_url(redirect_uri, state)
-    return RedirectResponse(auth_url)
+
+    # Return JSON for mobile, redirect for web
+    if platform == "mobile":
+        return JSONResponse({"auth_url": auth_url})
+    else:
+        return RedirectResponse(auth_url)
+
 
 @router.get("/callback")
 async def callback(request: Request, code: str, state: str):
     try:
-        # Decode the OAuth state from JWT
+        # Decode state JWT
         state_data = verify_jwt(state)
         if not state_data:
             raise HTTPException(status_code=400, detail="Invalid or expired OAuth state")
@@ -75,11 +83,12 @@ async def callback(request: Request, code: str, state: str):
         provider = state_data.get("provider")
         platform = state_data.get("platform")
 
+        # Select service & redirect URI
         if provider == "spotify":
             if platform == "mobile":
                 client_id = os.getenv("SPOTIFY_MOBILE_CLIENT_ID")
                 client_secret = os.getenv("SPOTIFY_MOBILE_CLIENT_SECRET")
-                redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "app://auth-success")
+                redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "emotionwellbeing://auth-success")
             else:
                 client_id = os.getenv("SPOTIFY_CLIENT_ID")
                 client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
@@ -91,7 +100,7 @@ async def callback(request: Request, code: str, state: str):
             if platform == "mobile":
                 client_id = os.getenv("GOOGLE_MOBILE_CLIENT_ID")
                 client_secret = os.getenv("GOOGLE_MOBILE_CLIENT_SECRET")
-                redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "app://auth-success")
+                redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "emotionwellbeing://auth-success")
             else:
                 client_id = os.getenv("GOOGLE_CLIENT_ID")
                 client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -102,10 +111,11 @@ async def callback(request: Request, code: str, state: str):
         else:
             raise HTTPException(status_code=400, detail="Invalid provider")
 
-        # Token exchange
+        # Exchange code for tokens
         tokens = service.exchange_code_for_token(code, redirect_uri)
         user_id = str(uuid.uuid4())
 
+        # Create JWT
         jwt_token = create_jwt({
             "user_id": user_id,
             "provider": provider,
@@ -114,6 +124,7 @@ async def callback(request: Request, code: str, state: str):
             "expires_at": int(time.time()) + tokens.get("expires_in", 3600)
         })
 
+        # Redirect back to app or send token in web response
         if platform == "mobile":
             return RedirectResponse(f"emotionwellbeing://auth-success?token={jwt_token}")
         else:
