@@ -1,3 +1,5 @@
+# auth.py
+
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -9,7 +11,6 @@ from services.spotify import SpotifyService
 from services.googlefit import GoogleFitService
 from utils.jwt import create_jwt, verify_jwt
 
-# Load environment variables
 load_dotenv()
 
 router = APIRouter()
@@ -21,12 +22,11 @@ async def index(request: Request):
 
 @router.get("/authorize")
 async def authorize(request: Request, platform: str = "web", provider: str = "spotify"):
-    # Generate OAuth state
     state_payload = {
         "state": str(uuid.uuid4()),
         "provider": provider,
         "platform": platform,
-        "exp": int(time.time()) + 300  # Expires in 5 min
+        "exp": int(time.time()) + 300  # 5 min expiry
     }
     state = create_jwt(state_payload)
 
@@ -34,35 +34,42 @@ async def authorize(request: Request, platform: str = "web", provider: str = "sp
         if platform == "mobile":
             client_id = os.getenv("SPOTIFY_MOBILE_CLIENT_ID")
             client_secret = os.getenv("SPOTIFY_MOBILE_CLIENT_SECRET")
-            redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "myapplication://auth-success")
+            redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "emotionwellbeing://auth-success")
         else:
             client_id = os.getenv("SPOTIFY_CLIENT_ID")
             client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
-            redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI", "https://emotion-k880.onrender.com/auth/callback")
+            redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:5000/auth/callback")
 
+        print("🔁 Spotify Redirect URI:", redirect_uri)
         service = SpotifyService(client_id, client_secret)
 
     elif provider == "google":
-        # Always use Web flow for Google
-        client_id = os.getenv("GOOGLE_CLIENT_ID")
-        client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
-        redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "https://emotion-k880.onrender.com/auth/callback")
+        if platform == "mobile":
+            client_id = os.getenv("GOOGLE_MOBILE_CLIENT_ID")
+            client_secret = os.getenv("GOOGLE_MOBILE_CLIENT_SECRET")
+            redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "emotionwellbeing://auth-success")
+        else:
+            client_id = os.getenv("GOOGLE_CLIENT_ID")
+            client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+            redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://127.0.0.1:5000/auth/callback")
 
+        print("🔁 Google Redirect URI:", redirect_uri)
         service = GoogleFitService(client_id, client_secret)
 
     else:
         raise HTTPException(status_code=400, detail="Invalid provider")
 
     auth_url = service.get_authorize_url(redirect_uri, state)
-
-    if platform == "mobile":
-        return JSONResponse({"auth_url": auth_url})
-    else:
-        return RedirectResponse(auth_url)
+    print(f"🔗 Auth URL for {provider}: {auth_url}")
+    return RedirectResponse(auth_url)
 
 @router.get("/callback")
-async def callback(request: Request, code: str, state: str):
+async def callback(request: Request, code: str = None, state: str = None):
     try:
+        print("🔄 Callback received")
+        print(f"   ↪️ code: {code}")
+        print(f"   ↪️ state: {state}")
+
         state_data = verify_jwt(state)
         if not state_data:
             raise HTTPException(status_code=400, detail="Invalid or expired OAuth state")
@@ -74,26 +81,35 @@ async def callback(request: Request, code: str, state: str):
             if platform == "mobile":
                 client_id = os.getenv("SPOTIFY_MOBILE_CLIENT_ID")
                 client_secret = os.getenv("SPOTIFY_MOBILE_CLIENT_SECRET")
-                redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "myapplication://auth-success")
+                redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "emotionwellbeing://auth-success")
             else:
                 client_id = os.getenv("SPOTIFY_CLIENT_ID")
                 client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
-                redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI", "https://emotion-k880.onrender.com/auth/callback")
+                redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:5000/auth/callback")
 
             service = SpotifyService(client_id, client_secret)
 
         elif provider == "google":
-            # Use Web flow only
-            client_id = os.getenv("GOOGLE_CLIENT_ID")
-            client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
-            redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "https://emotion-k880.onrender.com/auth/callback")
+            if platform == "mobile":
+                client_id = os.getenv("GOOGLE_MOBILE_CLIENT_ID")
+                client_secret = os.getenv("GOOGLE_MOBILE_CLIENT_SECRET")
+                redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "emotionwellbeing://auth-success")
+            else:
+                client_id = os.getenv("GOOGLE_CLIENT_ID")
+                client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+                redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://127.0.0.1:5000/auth/callback")
 
             service = GoogleFitService(client_id, client_secret)
 
         else:
             raise HTTPException(status_code=400, detail="Invalid provider")
 
+        print(f"🎟️ Exchanging code with {provider.capitalize()}")
+        print(f"   ↪️ Redirect URI: {redirect_uri}")
         tokens = service.exchange_code_for_token(code, redirect_uri)
+
+        print(f"✅ Token response from {provider.capitalize()}: {tokens}")
+
         user_id = str(uuid.uuid4())
 
         jwt_token = create_jwt({
@@ -105,7 +121,7 @@ async def callback(request: Request, code: str, state: str):
         })
 
         if platform == "mobile":
-           return JSONResponse({"token": jwt_token})
+            return RedirectResponse(f"emotionwellbeing://auth-success?token={jwt_token}")
         else:
             return JSONResponse({"token": jwt_token})
 
