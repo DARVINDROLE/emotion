@@ -105,7 +105,7 @@ async def callback(request: Request, code: str, state: str):
         })
 
         if platform == "mobile":
-            return RedirectResponse(f"myapplication://auth-success?token={jwt_token}")
+            return RedirectResponse(f"https://emotion-k880.onrender.com/auth/success?token={jwt_token}")
         else:
             return JSONResponse({"token": jwt_token})
 
