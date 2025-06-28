@@ -1,5 +1,3 @@
-# auth.py
-
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -128,4 +126,3 @@ async def callback(request: Request, code: str = None, state: str = None):
     except Exception as e:
         print("❌ Callback exception:", e)
         return JSONResponse(status_code=500, content={"error": str(e)})
-
