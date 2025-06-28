@@ -36,7 +36,7 @@ async def authorize(request: Request, platform: str = "web", provider: str = "sp
         else:
             client_id = os.getenv("SPOTIFY_CLIENT_ID")
             client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
-            redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:5000/auth/callback")
+            redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI", "https://emotion-k880.onrender.com/auth/callback")
 
         print("🔁 Spotify Redirect URI:", redirect_uri)
         service = SpotifyService(client_id, client_secret)
@@ -49,7 +49,7 @@ async def authorize(request: Request, platform: str = "web", provider: str = "sp
         else:
             client_id = os.getenv("GOOGLE_CLIENT_ID")
             client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
-            redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://127.0.0.1:5000/auth/callback")
+            redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "https://emotion-k880.onrender.com/auth/callback")
 
         print("🔁 Google Redirect URI:", redirect_uri)
         service = GoogleFitService(client_id, client_secret)
@@ -83,7 +83,7 @@ async def callback(request: Request, code: str = None, state: str = None):
             else:
                 client_id = os.getenv("SPOTIFY_CLIENT_ID")
                 client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
-                redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:5000/auth/callback")
+                redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI", "https://emotion-k880.onrender.com/auth/callback")
 
             service = SpotifyService(client_id, client_secret)
 
@@ -95,7 +95,7 @@ async def callback(request: Request, code: str = None, state: str = None):
             else:
                 client_id = os.getenv("GOOGLE_CLIENT_ID")
                 client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
-                redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://127.0.0.1:5000/auth/callback")
+                redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "https://emotion-k880.onrender.com/auth/callback")
 
             service = GoogleFitService(client_id, client_secret)
 
