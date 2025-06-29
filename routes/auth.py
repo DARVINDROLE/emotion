@@ -19,6 +19,7 @@ templates = Jinja2Templates(directory="templates")
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+
 @router.get("/authorize")
 async def authorize(request: Request, platform: str = "web", provider: str = "spotify"):
     # Generate OAuth state
@@ -34,7 +35,7 @@ async def authorize(request: Request, platform: str = "web", provider: str = "sp
         if platform == "mobile":
             client_id = os.getenv("SPOTIFY_MOBILE_CLIENT_ID")
             client_secret = os.getenv("SPOTIFY_MOBILE_CLIENT_SECRET")
-            redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "myapplication://auth-success")
+            redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "emotionwellbeing://auth-success")
         else:
             client_id = os.getenv("SPOTIFY_CLIENT_ID")
             client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
@@ -43,7 +44,7 @@ async def authorize(request: Request, platform: str = "web", provider: str = "sp
         service = SpotifyService(client_id, client_secret)
 
     elif provider == "google":
-        # Always use Web flow for Google
+        # Google flow (web/mobile both use server callback)
         client_id = os.getenv("GOOGLE_CLIENT_ID")
         client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
         redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "https://emotion-k880.onrender.com/auth/callback")
@@ -60,6 +61,7 @@ async def authorize(request: Request, platform: str = "web", provider: str = "sp
     else:
         return RedirectResponse(auth_url)
 
+
 @router.get("/callback")
 async def callback(request: Request, code: str, state: str):
     try:
@@ -74,7 +76,7 @@ async def callback(request: Request, code: str, state: str):
             if platform == "mobile":
                 client_id = os.getenv("SPOTIFY_MOBILE_CLIENT_ID")
                 client_secret = os.getenv("SPOTIFY_MOBILE_CLIENT_SECRET")
-                redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "myapplication://auth-success")
+                redirect_uri = os.getenv("SPOTIFY_MOBILE_REDIRECT_URI", "emotionwellbeing://auth-success")
             else:
                 client_id = os.getenv("SPOTIFY_CLIENT_ID")
                 client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
@@ -83,7 +85,6 @@ async def callback(request: Request, code: str, state: str):
             service = SpotifyService(client_id, client_secret)
 
         elif provider == "google":
-            # Use Web flow only
             client_id = os.getenv("GOOGLE_CLIENT_ID")
             client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
             redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "https://emotion-k880.onrender.com/auth/callback")
@@ -105,10 +106,14 @@ async def callback(request: Request, code: str, state: str):
         })
 
         if platform == "mobile":
-           return JSONResponse({"token": jwt_token})
+            # ✅ Redirect to deep link with token as query param
+            mobile_redirect_uri = os.getenv("GOOGLE_MOBILE_REDIRECT_URI", "emotionwellbeing://auth-success")
+            deep_link_url = f"{mobile_redirect_uri}?token={jwt_token}"
+            return RedirectResponse(url=deep_link_url)
         else:
             return JSONResponse({"token": jwt_token})
 
     except Exception as e:
         print("❌ Callback exception:", e)
         return JSONResponse(status_code=500, content={"error": str(e)})
+
